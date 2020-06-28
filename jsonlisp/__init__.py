@@ -111,6 +111,10 @@ def parse(line):
     return json.loads(line)
 
 
+def parse_file(path):
+    return json.load(path)
+
+
 def unparse(expr):
     return json.dumps(expr, default=to_json)
 
@@ -165,7 +169,6 @@ def interp(x, env):
 def repl(prompt=r"{λ}> "):
     env = Env()
     env.update(std_env)
-    env["__env__"] = env
 
     while True:
         try:
@@ -180,3 +183,10 @@ def repl(prompt=r"{λ}> "):
             break
         except Exception as err:
             print(repr(err))
+
+
+def run_file(path):
+    env = Env()
+    env.update(std_env)
+    with open(path) as f:
+        print(unparse(interp(parse_file(f), env)))

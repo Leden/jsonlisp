@@ -48,54 +48,73 @@ class Macro:
         return ["macro", self.params, self.body]
 
 
-std_env = {
-    "!": operator.not_,  # not x
-    "&": operator.and_,  # x and y
-    "*": operator.mul,  # x * y
-    "+": operator.add,  # x + y
-    "-": operator.sub,  # x - y
-    "/": operator.truediv,  # x / y
-    "<": operator.lt,  # x < y
-    "<=": operator.le,  # x <= y
-    "=": operator.eq,  # x == y
-    ">": operator.gt,  # x > y
-    ">=": operator.ge,  # x >= y
-    "^": operator.xor,  # x ^ y
-    "apply": lambda proc, args: proc(*args),  # x(*y)
+builtins = {
+    # Operators
+    "*": operator.mul,
+    "+": operator.add,
+    "-": operator.sub,
+    "/": operator.truediv,
+    "<": operator.lt,
+    "<=": operator.le,
+    "=": operator.eq,
+    ">": operator.gt,
+    ">=": operator.ge,
+    "^": operator.xor,
+    "and": operator.and_,
+    "contains": operator.contains,
+    "in": lambda x, y: x in y,
+    "is": operator.is_,
+    "is-not": operator.is_not,
+    "not": operator.not_,
+    "or": operator.or_,
+    "xor": lambda x, y: bool(x) ^ bool(y),  # logical XOR
+    # Typechecks
+    "dict?": lambda x: isinstance(x, Dict),
+    "list?": lambda x: isinstance(x, List),
+    "macro?": lambda x: isinstance(x, Macro),
+    "null?": lambda x: x is None,
+    "number?": lambda x: isinstance(x, Number),
+    "proc?": callable,
+    "symbol?": lambda x: isinstance(s, Symbol),
+    # List functions
     "begin": lambda *x: x[-1],
-    "cons": lambda x, y: [x, *y],  # [x, *y]
+    "cons": lambda x, y: [x, *y],
+    "head": lambda x: x[0],
+    "len": len,
+    "list": lambda *x: list(x),
+    "map": lambda *args: list(map(*args)),
+    "tail": lambda x: x[1:],
+    # Dict functions
     "dict": lambda x: dict(x),
     "dict-del": lambda d, k: {_k: d[_k] for _k in d if k != _k},
     "dict-get": lambda d, k: d.get(k),
     "dict-items": lambda x: list(x.items()),
     "dict-set": lambda d, k, v: {**d, k: v},
-    "dict?": lambda x: isinstance(x, Dict),
-    "in": lambda x, y: x in y,
-    "len": len,
-    "list": lambda *x: list(x),  # list(x)
-    "list?": lambda x: isinstance(x, List),
-    "macro?": lambda x: isinstance(x, Macro),
-    "map": lambda *args: list(map(*args)),  # list(map(x))
-    "null?": lambda x: x is None,
-    "number?": lambda x: isinstance(x, Number),
-    "print": pprint,
-    "proc?": callable,
-    "symbol?": lambda x: isinstance(s, Symbol),
-    "|": operator.or_,  # x or y
-    "head": lambda x: x[0],
-    "tail": lambda x: x[1:],
-    "defmacro": [
-        "macro",
-        ["name", "params", "body"],
+    # Misc functions
+    "apply": lambda proc, args: proc(*args),
+    "print": print,
+}
+
+
+std_lib = [
+    "list",
+    [
+        "def",
+        "defmacro",
         [
-            "list",
-            ["quote", "def"],
-            "name",
-            ["list", ["quote", "macro"], "params", "body"],
+            "macro",
+            ["name", "params", "body"],
+            [
+                "list",
+                ["quote", "def"],
+                "name",
+                ["list", ["quote", "macro"], "params", "body"],
+            ],
         ],
     ],
-    "defproc": [
-        "macro",
+    [
+        "defmacro",
+        "defproc",
         ["name", "params", "body"],
         [
             "list",
@@ -104,7 +123,14 @@ std_env = {
             ["list", ["quote", "lambda"], "params", "body"],
         ],
     ],
-}
+]
+
+
+def default_env():
+    env = Env()
+    env.update(builtins)
+    interp(std_lib, env)
+    return env
 
 
 def parse(line):
@@ -167,8 +193,7 @@ def interp(x, env):
 
 
 def repl(prompt=r"{λ}> "):
-    env = Env()
-    env.update(std_env)
+    env = default_env()
 
     while True:
         try:
@@ -186,7 +211,7 @@ def repl(prompt=r"{λ}> "):
 
 
 def run_file(path):
-    env = Env()
-    env.update(std_env)
+    env = default_env()
+
     with open(path) as f:
         print(unparse(interp(parse_file(f), env)))

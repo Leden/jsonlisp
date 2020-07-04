@@ -1,9 +1,13 @@
-import pytest
-
 import jsonlisp
+import pytest
+from jsonlisp import __version__
 
 
-@pytest.fixture
+def test_version():
+    assert __version__ == "0.1.0"
+
+
+@pytest.fixture()
 def env():
     return jsonlisp.default_env()
 

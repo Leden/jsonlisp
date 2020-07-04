@@ -1,10 +1,10 @@
-from collections import ChainMap
-from pprint import pprint
-import functools
-import ipdb
+__version__ = "0.1.0"
 import json
 import logging
 import operator
+from collections import ChainMap
+
+import ipdb
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +75,7 @@ builtins = {
     "null?": lambda x: x is None,
     "number?": lambda x: isinstance(x, Number),
     "proc?": callable,
-    "symbol?": lambda x: isinstance(s, Symbol),
+    "symbol?": lambda x: isinstance(x, Symbol),
     # List functions
     "begin": lambda *x: x[-1],
     "cons": lambda x, y: [x, *y],
@@ -83,6 +83,7 @@ builtins = {
     "len": len,
     "list": lambda *x: list(x),
     "map": lambda *args: list(map(*args)),
+    "range": lambda *x: list(range(*x)),
     "tail": lambda x: x[1:],
     # Dict functions
     "dict": lambda x: dict(x),
